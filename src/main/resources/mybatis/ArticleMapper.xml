@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ Octagon Plugin Encyclopedia: Encyclopedia plugin for Octagon application.
+ Copyright (C) 2021-2022 the original author or authors.
+
+ This program is free software; you can redistribute it and/or
+ modify it under the terms of the GNU General Public License
+ as published by the Free Software Foundation; version 2
+ of the License only.
+ 
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ 
+ You should have received a copy of the GNU General Public License
+ along with this program; if not, write to the Free Software
+ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.nanoboot.octagon.plugin.encyclopedia.persistence.impl.mappers.ArticleMapper">
+
+    <resultMap id="articleResultMap" type="org.nanoboot.octagon.plugin.encyclopedia.classes.Article">
+        <id property="id" column="ID" typeHandler="org.nanoboot.octagon.entity.typehandlers.UUIDTypeHandler"/>
+        <result property="name" column="NAME"/>
+        <result property="top" column="TOP" typeHandler="org.nanoboot.octagon.entity.typehandlers.BooleanTypeHandler" />
+        <result property="note" column="NOTE" />
+        <result property="score" column="SCORE" />
+        <result property="knowledgeLevel" column="KNOWLEDGE_LEVEL"  typeHandler="org.nanoboot.octagon.plugin.encyclopedia.persistence.impl.typehandlers.KnowledgeLevelTypeHandler" />
+    </resultMap>
+
+    <sql id="articleColumns">
+        "ID", "NAME", "TOP", "NOTE", "SCORE", "KNOWLEDGE_LEVEL"
+    </sql>
+
+    <insert id="create" parameterType="org.nanoboot.octagon.plugin.encyclopedia.classes.Article">
+        INSERT INTO "ARTICLE" (<include refid="articleColumns"/>)
+        VALUES
+        (
+        #{id},
+        #{name},
+        #{top,javaType=Boolean,jdbcType=INTEGER,typeHandler=org.nanoboot.octagon.entity.typehandlers.BooleanTypeHandler},
+        #{note},
+        #{score},
+        #{knowledgeLevel,javaType=org.nanoboot.octagon.plugin.encyclopedia.classes.KnowledgeLevel,jdbcType=VARCHAR,typeHandler=org.nanoboot.octagon.plugin.encyclopedia.persistence.impl.typehandlers.KnowledgeLevelTypeHandler}
+        )
+    </insert>
+
+    <select id="read" parameterType="String" resultMap="articleResultMap">
+        SELECT
+        <include refid="articleColumns"/>
+        FROM "ARTICLE"
+        WHERE "ID" = #{id}
+    </select>
+
+    <update id="update" parameterType="org.nanoboot.octagon.plugin.encyclopedia.classes.Article">
+        UPDATE "ARTICLE" SET
+        "NAME" = #{name},
+        "TOP" = #{top},
+        "NOTE" = #{note},
+        "SCORE" = #{score},
+        "KNOWLEDGE_LEVEL" = #{knowledgeLevel}
+
+        WHERE "ID" = #{id}
+    </update>
+
+    <delete id="delete" parameterType="String">
+            DELETE FROM "ARTICLE"
+            WHERE "ID" = #{id}
+    </delete>
+
+    <select id="list" parameterType="String" resultMap="articleResultMap">
+        SELECT
+        <include refid="articleColumns"/>
+        FROM "ARTICLE"
+        WHERE ${value}
+    </select>
+
+
+    <!-- Labels -->
+    <resultMap id="labelResultMap" type="org.nanoboot.octagon.entity.classes.EntityLabel">
+        <id property="id" column="ID"/>
+        <result property="label" column="NAME"/>
+    </resultMap>
+
+    <sql id="labelColumns">
+        "ID", "NAME"
+    </sql>
+
+    <select id="getLabel" parameterType="String" resultType="String">
+        SELECT
+            "NAME"
+        FROM "ARTICLE"
+        WHERE "ID" = #{id}
+    </select>
+    <select id="getLabels" resultMap="labelResultMap">
+        SELECT
+        <include refid="labelColumns"/>
+        FROM "ARTICLE"
+    </select>
+</mapper>

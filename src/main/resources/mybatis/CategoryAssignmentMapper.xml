@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ Octagon Plugin Encyclopedia: Encyclopedia plugin for Octagon application.
+ Copyright (C) 2021-2022 the original author or authors.
+
+ This program is free software; you can redistribute it and/or
+ modify it under the terms of the GNU General Public License
+ as published by the Free Software Foundation; version 2
+ of the License only.
+ 
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ 
+ You should have received a copy of the GNU General Public License
+ along with this program; if not, write to the Free Software
+ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.nanoboot.octagon.plugin.encyclopedia.persistence.impl.mappers.CategoryAssignmentMapper">
+
+    <resultMap id="categoryAssignmentResultMap" type="org.nanoboot.octagon.plugin.encyclopedia.classes.CategoryAssignment">
+        <id property="id" column="ID" typeHandler="org.nanoboot.octagon.entity.typehandlers.UUIDTypeHandler"/>
+        <id property="articleId" column="ARTICLE_ID"
+            typeHandler="org.nanoboot.octagon.entity.typehandlers.UUIDTypeHandler"/>
+        <id property="categoryId" column="CATEGORY_ID"
+            typeHandler="org.nanoboot.octagon.entity.typehandlers.UUIDTypeHandler"/>
+        <id property="parentCategoryId" column="PARENT_CATEGORY_ID"
+            typeHandler="org.nanoboot.octagon.entity.typehandlers.UUIDTypeHandler"/>
+    </resultMap>
+
+    <sql id="categoryAssignmentColumns">
+        "ID"
+        , "ARTICLE_ID", "CATEGORY_ID", "PARENT_CATEGORY_ID"
+    </sql>
+
+    <insert id="create" parameterType="org.nanoboot.octagon.plugin.encyclopedia.classes.CategoryAssignment">
+        INSERT INTO "CATEGORY_ASSIGNMENT" (<include refid="categoryAssignmentColumns"/>)
+        VALUES
+        (
+        #{id},
+        #{articleId},
+        #{categoryId},
+        #{parentCategoryId}
+        )
+    </insert>
+
+    <select id="read" parameterType="String" resultMap="categoryAssignmentResultMap">
+        SELECT
+        <include refid="categoryAssignmentColumns"/>
+        FROM "CATEGORY_ASSIGNMENT"
+        WHERE "ID" = #{id}
+    </select>
+
+    <update id="update" parameterType="org.nanoboot.octagon.plugin.encyclopedia.classes.CategoryAssignment">
+        UPDATE "CATEGORY_ASSIGNMENT"
+        SET "ARTICLE_ID"         = #{articleId},
+            "CATEGORY_ID"        = #{categoryId},
+            "PARENT_CATEGORY_ID" = #{parentCategoryId}
+
+        WHERE "ID" = #{id}
+    </update>
+
+    <delete id="delete" parameterType="String">
+        DELETE
+        FROM "CATEGORY_ASSIGNMENT"
+        WHERE "ID" = #{id}
+    </delete>
+
+    <select id="list" parameterType="String" resultMap="categoryAssignmentResultMap">
+        SELECT
+        <include refid="categoryAssignmentColumns"/>
+        FROM "CATEGORY_ASSIGNMENT"
+        WHERE ${value}
+    </select>
+
+
+    <!-- Labels -->
+    <resultMap id="labelResultMap" type="org.nanoboot.octagon.entity.classes.EntityLabel">
+        <id property="id" column="ID"/>
+        <result property="label" column="NAME"/>
+    </resultMap>
+
+    <sql id="labelColumns">
+        "ID"
+        , "NAME"
+    </sql>
+
+    <select id="getLabel" parameterType="String" resultType="String">
+        select CATEGORY_ASSIGNMENT.id as id, (parent_category.name || ' : ' || child.name || ' ' ||  case when article_id is null then '(category)' else '(article)' end) as NAME from
+                                                                                                                                                                                       CATEGORY_ASSIGNMENT,
+                                                                                                                                                                                       category as parent_category,
+                                                                                                                                                                                       (select id, name from article union select id, name from category) as child
+        where category_assignment.id = #{id}
+          and
+            PARENT_CATEGORY_ID=PARENT_CATEGORY.id
+          AND
+                child.id=
+                case
+                    when article_id is null then CATEGORY_ID
+                    else article_id
+                    end
+    </select>
+    <select id="getLabels" resultMap="labelResultMap">
+        select CATEGORY_ASSIGNMENT.id                                                as id,
+               (parent_category.name || ' : ' || child.name || ' ' ||
+                case when article_id is null then '(category)' else '(article)' end) as NAME
+        from CATEGORY_ASSIGNMENT,
+             category as parent_category,
+             (select id, name from article union select id, name from category) as child
+        where PARENT_CATEGORY_ID = PARENT_CATEGORY.id
+          AND child.id =
+              case
+                  when article_id is null then CATEGORY_ID
+                  else article_id
+                  end
+    </select>
+</mapper>
